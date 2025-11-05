@@ -1,28 +1,61 @@
-import { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react';
+import { Moon, Sun } from 'lucide-react';
+import HeroSection from './components/HeroSection';
+import InteractiveQuestionnaire from './components/InteractiveQuestionnaire';
+import AIDashboard from './components/AIDashboard';
+import SiteFooter from './components/SiteFooter';
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const [plan, setPlan] = useState(null);
+  const [theme, setTheme] = useState('light');
+  const formRef = useRef(null);
+
+  useEffect(() => {
+    // Respect system preference on first load
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const saved = localStorage.getItem('ai-planner-theme');
+    const t = saved || (prefersDark ? 'dark' : 'light');
+    setTheme(t);
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') root.classList.add('dark');
+    else root.classList.remove('dark');
+    localStorage.setItem('ai-planner-theme', theme);
+  }, [theme]);
+
+  const scrollToForm = () => {
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">
-          Vibe Coding Platform
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Your AI-powered development environment
-        </p>
-        <div className="text-center">
-          <button
-            onClick={() => setCount(count + 1)}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
-          >
-            Count is {count}
-          </button>
-        </div>
+    <div className="min-h-screen bg-slate-50 text-slate-900 antialiased transition-colors dark:bg-slate-950 dark:text-slate-100">
+      {/* Top bar with theme toggle */}
+      <div className="sticky top-0 z-20 mx-auto mb-6 flex w-full max-w-6xl items-center justify-end px-6 pt-4">
+        <button
+          onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-sm backdrop-blur-md transition hover:border-cyan-400 dark:border-slate-700 dark:bg-slate-900/60"
+          aria-label="Toggle theme"
+        >
+          {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-300" /> : <Moon className="h-4 w-4 text-cyan-500" />}
+          <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'} Mode</span>
+        </button>
       </div>
-    </div>
-  )
-}
 
-export default App
+      <main className="mx-auto max-w-6xl px-6">
+        <HeroSection onStart={scrollToForm} />
+
+        <div ref={formRef}>
+          <InteractiveQuestionnaire onGenerate={setPlan} />
+        </div>
+
+        <AIDashboard plan={plan} />
+
+        <SiteFooter />
+      </main>
+    </div>
+  );
+};
+
+export default App;
